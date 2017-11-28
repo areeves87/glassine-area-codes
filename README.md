@@ -26,14 +26,14 @@ From there, I discovered r/glassine, which is a board of Reviews, Discussions, o
 **area_code_data.r**: code for obtaining the above datasets
 
 ## Preliminary Analysis: ##
-Area Code | Count
----------|-----
-412 | 263
-973 | 205
-215 | 52
-609 | 38
-724 | 13
-other | 34
-NA | 393
+Area Code | Count | State
+---------|-----|-----
+412 | 263 | PA
+973 | 205 | NJ
+215 | 52 | PA
+609 | 38 | NJ
+724 | 13 | PA
+other | 34 | ""
+NA | 393 | ""
 
 "NA" is counted each time a thread does not contain a three-digit area code, which happened ~40% of the time.
