@@ -3,7 +3,7 @@ Counted area code mentions in the subreddit /r/glassine, which contains threads 
 
 Link to dataset: https://www.reddit.com/r/glassine/
 
-Description of what I am looking for:
+Description of what /u/VroooMoose is looking for:
 
 Hello! I'm an EMT in one of the United States' hotbeds for heroin and opiate use, addiction, and overdoses.
 I rarely go a couple of years without being affected within ~3 degrees of separation, I rarely go a shift of EMS without having an overdose, and I can't go through watching anything on TV without seeing at least 3 commercials addressing addiction. It is a massive problem.
