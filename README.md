@@ -35,3 +35,5 @@ Area Code | Count
 724 | 13
 other | 34
 NA | 393
+
+"NA" is counted each time a thread does not contain a three-digit area code, which happened ~40% of the time.
