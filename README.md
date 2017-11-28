@@ -24,3 +24,14 @@ From there, I discovered r/glassine, which is a board of Reviews, Discussions, o
 **counts.csv**: a tally of area code mentions for the /r/glassine thread titles in glassine_urls.csv
 
 **area_code_data.r**: code for obtaining the above datasets
+
+## Preliminary Analysis: ##
+Area Code | Count
+---------|-----
+412 | 263
+973 | 205
+215 | 52
+609 | 38
+724 | 13
+other | 34
+NA | 393
