@@ -26,6 +26,9 @@ From there, I discovered r/glassine, which is a board of Reviews, Discussions, o
 **area_code_data.r**: code for obtaining the above datasets
 
 ## Preliminary Analysis: ##
+
+Out of 998 threads, here are the tallies:
+
 Area Code | Count | State
 ---------|-----|-----
 412 | 263 | PA
