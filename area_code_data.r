@@ -17,7 +17,7 @@ state_codes<-area_codes_by_state[area_code_row,3]
 
 df.counts<-cbind(area_codes,state_codes)
 
-write.csv(df.counts,"counts.csv",row.names = FALSE)
+#write.csv(df.counts,"counts.csv",row.names = FALSE)
 
 
 
