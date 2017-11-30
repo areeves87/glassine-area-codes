@@ -17,13 +17,25 @@ From there, I discovered r/glassine, which is a board of Reviews, Discussions, o
 
 ## Description of files ##
 
+**AreaCode.zip**: zipped folder containing the .shp file that delineates area code boundaries.
+
+**area_code_data.r**: script for obtaining the above datasets
+
+**area_code_map.r**: script for generating the maps in the .png files.
+
 **area_codes_by_state.csv**: a reference detailing which area code belongs to which state
+
+**counts.csv**: a tally of area code mentions for each of the /r/glassine thread titles in glassine_urls.csv
 
 **glassine_urls.csv**: a collection of thread urls & titles from /r/glassine obtained with the redditextractor R package
 
-**counts.csv**: a tally of area code mentions for the /r/glassine thread titles in glassine_urls.csv
+**pa_glassine.png**: a cholopleth map of the Pennsylvania-New Jersey region shaded according to number of /r/glassine mentions. 
 
-**area_code_data.r**: code for obtaining the above datasets
+**usa_glassine.png**: a cholopleth map of mainland USA shaded according to number of /r/glassine mentions.
+
+
+
+
 
 ## Preliminary Analysis: ##
 
