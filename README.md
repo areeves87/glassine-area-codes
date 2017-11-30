@@ -1,7 +1,7 @@
 # glassine-area-codes #
 Counted area code mentions in the subreddit /r/glassine, which contains threads reviewing heroin "branded" bags
 
-Link to dataset: https://www.reddit.com/r/glassine/
+Link to subreddit: https://www.reddit.com/r/glassine/
 
 ## Description of what /u/VroooMoose is looking for: ##
 
@@ -40,3 +40,5 @@ other | 34 | ""
 NA | 393 | ""
 
 "NA" is counted each time a thread does not contain a three-digit area code, which happened ~40% of the time.
+
+See the .png files for cholopleth maps of area code mentions in mainland US and Pennsylvania-New Jersey region.
