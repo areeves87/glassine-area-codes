@@ -2,11 +2,14 @@
 title: "area_code_report"
 author: "areeves"
 date: "December 1, 2017"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 # Collect and Process /r/glassine Dataset
@@ -19,13 +22,18 @@ library(stringr)
 
 Collect the raw data from repo or web:
 ```{r}
-ifelse(file.exists("glassine_urls.csv"),
-       glassine_urls <- read.csv("glassine_urls.csv"),
-       glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40))
 
-ifelse(file.exists("area_codes_by_state.csv"),
-       area_codes_by_state <- read.csv("area_codes_by_state.csv"),
-       sprintf("use URL to get xls file -- file.download() didn't work for me"))
+if (file.exists("glassine_urls.csv")) {
+  glassine_urls <- read.csv("glassine_urls.csv")
+} else {
+  glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+}
+
+if (file.exists("area_codes_by_state.csv")) {
+  area_codes_by_state <- read.csv("area_codes_by_state.csv")
+} else {
+  sprintf("use URL to get xls file -- file.download() didn't work for me")
+}
 
 # URL <- "https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi2lb79huDXAhWq0FQKHeQ0A9EQFggoMAA&url=http%3A%2F%2Fmedia.juiceanalytics.com%2Fdownloads%2Farea_codes_by_state.xls&usg=AOvVaw3xPwQBSxfXDIqjnq6etEWn"
 ```
