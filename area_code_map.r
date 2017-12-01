@@ -1,4 +1,4 @@
-# load up area shape file:
+# load up libraries:
 library(maptools)
 library(sp)
 library(rgdal)
