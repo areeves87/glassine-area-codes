@@ -1,0 +1,149 @@
+---
+title: "area_code_report"
+author: "areeves"
+date: "December 1, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Collect and Process /r/glassine Dataset
+
+Load the relevant libraries:
+```{r}
+library(RedditExtractoR)
+library(stringr)
+```
+
+Collect the raw data from repo or web:
+```{r}
+ifelse(file.exists("glassine_urls.csv"),
+       glassine_urls <- read.csv("glassine_urls.csv"),
+       glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40))
+
+ifelse(file.exists("area_codes_by_state.csv"),
+       area_codes_by_state <- read.csv("area_codes_by_state.csv"),
+       sprintf("use URL to get xls file -- file.download() didn't work for me"))
+
+# URL <- "https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi2lb79huDXAhWq0FQKHeQ0A9EQFggoMAA&url=http%3A%2F%2Fmedia.juiceanalytics.com%2Fdownloads%2Farea_codes_by_state.xls&usg=AOvVaw3xPwQBSxfXDIqjnq6etEWn"
+```
+
+Process the raw data. The format for an area code is a three-digit number. So to collect area codes mentioned in the title of each /r/glassine thread, use regex to grab three-digit strings from the url title column. This will produce an array of candidate area codes.
+```{r}
+area_codes<-str_extract(glassine_urls$title, "[0-9]{3}")
+```
+
+Load map-making libraries:
+```{r}
+# load up libraries:
+library(maptools)
+library(sp)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(broom)
+library(ggmap)
+library(rgeos)
+```
+
+Create frequency table for area code mentions:
+```{r}
+ac_tbl<-table(area_codes)
+```
+
+Hard-coded solution to get rid of low-count area codes that overlap high-count area code. (Improve later)
+```{r}
+ac_tbl<-ac_tbl[!(names(ac_tbl) %in% c("267","862"))]
+```
+
+Unzip the AreaCode.zip file to extract the AreaCode.shp file delineating the 
+extent of each area code in lat,lon coordinates. Read in the .shp file and then 
+remove all extracted files to clear up space.
+```{r}
+unzip("AreaCode.zip")
+area <- readOGR("AreaCode.shp")
+
+file.remove("AreaCode.dbf","AreaCode.prj","AreaCode.sbn",
+            "AreaCode.sbx","AreaCode.shx","AreaCode.shp","AreaCode.shp.xml")
+```
+
+select shapes only for area codes mentioned in the frequency table
+```{r}
+
+glassine_area<-area[which(area$NPA %in% names(ac_tbl)),]
+```
+
+add a column of data indicating number of mentions per area code
+```{r}
+
+ac_ref<-match(glassine_area@data$NPA,names(ac_tbl))
+glassine_area@data$TALLY <- as.vector(ac_tbl[ac_ref])
+```
+
+For area code labels, use the centroid of an area code, which is found using a function in the rgeos package. Find lat,lon of centroids and add them as two columns of data.
+```{r}
+
+glassine_area$CENTER.x<-tidy(gCentroid(glassine_area, byid=TRUE))[,1]
+glassine_area$CENTER.y<-tidy(gCentroid(glassine_area, byid=TRUE))[,2]
+```
+
+Make proper transform -- not sure if this is necessary
+```{r}
+
+glassine_WGS84 <- spTransform(glassine_area, CRS("+init=epsg:4326"))
+glassine_df_WGS84 <- tidy(glassine_WGS84)
+glassine_WGS84$polyID <- sapply(slot(glassine_WGS84, "polygons"), function(x) slot(x, "ID"))
+glassine_df_WGS84 <- merge(glassine_df_WGS84, glassine_WGS84, by.x = "id", by.y="polyID")
+```
+
+## Cholopleth Maps of /r/glassine Dataset
+
+Create a cholopleth map of mainland USA
+```{r}
+
+usa_basemap <- get_map(location="United States", zoom=4, maptype = 'satellite')
+
+ggmap(usa_basemap) +
+        geom_polygon(data = glassine_df_WGS84, 
+                     aes(x=long, y=lat, group = group, # coordinates, and group them by polygons
+                         fill = TALLY), alpha = 0.5) + # variable to use for filling
+        scale_fill_gradient(low="#bfefff",high="red")+
+        ggtitle("Area Code Mentions in /r/glassine")
+```
+
+Create a cholopleth map of PA-NJ region
+```{r}
+
+pa_basemap <- get_map(location="PA", zoom=6, maptype = 'satellite')
+
+ggmap(pa_basemap) +
+        geom_polygon(data = glassine_df_WGS84, 
+                    aes(x=long, y=lat, group = group, # coordinates, and group them by polygons
+                        fill = TALLY), alpha = .8) + # variable to use for filling
+        scale_fill_gradient(low="#bfefff",high="red")+
+        geom_text(data = glassine_df_WGS84,aes(x=CENTER.x,y=CENTER.y,
+                        label=ifelse(TALLY>20,as.character(NPA),'')))+
+        ggtitle("Area Code Mentions in /r/glassine")
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
