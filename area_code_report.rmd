@@ -189,7 +189,7 @@ library(ggmap)
 ```
 
 Create a cholopleth map of mainland USA
-```{r echo=FALSE, out.width='100%'}
+```{r, out.width='100%'}
 if (file.exists("usa_glassine.png")) {
   knitr::include_graphics('usa_glassine.png')
 } else {
@@ -206,7 +206,7 @@ ggmap(usa_basemap) +
 ```
 
 Create a cholopleth map of PA-NJ region
-```{r echo=FALSE, out.width='100%'}
+```{r, out.width='100%'}
 if (file.exists("pa_glassine.png")) {
   knitr::include_graphics('pa_glassine.png')
 } else {
