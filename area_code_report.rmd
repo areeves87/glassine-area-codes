@@ -1,5 +1,5 @@
 ---
-title: "Cholopleth Map of /r/glassine Area Codes"
+title: "Choropleth Map of /r/glassine Area Codes"
 author: "areeves"
 date: "December 1, 2017"
 output: 
@@ -20,7 +20,7 @@ The following is a fulfillment of a data visualization request on the subreddit 
 This was done for free as an exercise for my own edification. Kudos to the requester /u/VroooMoose for identifying an interesting line of research.
 
 
-## Description of what /u/VroooMoose is looking for:
+## /u/VroooMoose's Objective:
 
 *Hello! I'm an EMT in one of the United States' hotbeds for heroin and opiate use, addiction, and overdoses.
 I rarely go a couple of years without being affected within ~3 degrees of separation, I rarely go a shift of EMS without having an overdose, and I can't go through watching anything on TV without seeing at least 3 commercials addressing addiction. It is a massive problem.*
@@ -34,27 +34,26 @@ From there, I discovered r/glassine, which is a board of Reviews, Discussions, o
 
 ## Working Hypothesis
 
-For now I am operating under the assumption that /r/glassine area code mentions are indicative of an area code's level of opiate use and abuse because the redditors frequenting the sub are representative of US opiate users. This assumption will fall apart. I will define this datasets biases and evaluate the extent to which it can provide useful insights. From there I will develop a new working hypothesis.
+For now I am operating under the assumption that [/r/glassine](https://www.reddit.com/r/glassine/) area code mentions are indicative of an area code's level of opiate use and abuse because the redditors frequenting the sub are representative of US opiate users. This assumption will fall apart. I will define this datasets biases and evaluate the extent to which it can provide useful insights. From there I will develop a new working hypothesis.
 
-## Collect and Process /r/glassine Dataset
+## Count Data
 
-Because the dataset did not yet exist. I had to begin by collecting the area codes mentioned in /r/glassine. I used the RedditExtractoR R package to scrape the post titles, I used the stringr R package for extracting candidate area codes from post titles, and I used the knitr R package to display a frequency table.
+Because the dataset did not yet exist. I had to begin by collecting the area codes mentioned in /r/glassine. I used the RedditExtractoR R package to scrape the post titles and I used the stringr R package for extracting candidate area codes from post titles.
 
 Load the relevant libraries:
 ```{r}
 library(RedditExtractoR)
 library(stringr)
-library(knitr)
 ```
 
-Check whether the raw data is available in the working directory. If it isn't collect the data from the web.
+The following code chunk checks whether the raw data is available in the working directory. If not, collect the data from the github repo. Alternatively, scrape new data from reddit.
 ```{r}
 
 if (file.exists("glassine_urls.csv")) {
-        glassine_urls <- read.csv("glassine_urls.csv")
+        glassine_urls <- read.csv("glassine_urls.csv", stringsAsFactors = FALSE)
 } else {
         download.file("https://github.com/areeves87/glassine-area-codes/blob/master/glassine_urls.csv","glassine_urls.csv",mode="wb")
-        glassine_urls <- read.csv("glassine_urls.csv")
+        glassine_urls <- read.csv("glassine_urls.csv", stringsAsFactors = FALSE)
 }
 
 # ##Uncomment to re-perform reddit scrape
@@ -73,48 +72,51 @@ if (file.exists("area_codes_by_state.csv")) {
 
 Examine the glassine data to decide how to parse the content.
 ```{r}
-kable(head(glassine_urls),booktabs=TRUE,caption='First few rows of glassine data')
+str(glassine_urls,strict.width="cut")
 ```
 
-The glassine data has 998 rows and 5 columns, with each row containing data for a single thread and each column representing a feature across all 998 threads. The features include:
+The glassine data has `r dim(glassine_urls)[1]` rows and `r dim(glassine_urls)[2]` columns, with each row containing data for a single thread and each column representing a feature across all `r dim(glassine_urls)[1]` threads. The features include:
 
 * a **"date"** column, which is the date the thread was posted
-* a **"num_of_comments"** column, which is the number of comments the thread had 
+* a **"num_comments"** column, which is the number of comments the thread had 
 * a **"title"** column, which is the title of the thread
 * a **"subreddit"** column, which is the subreddit the thread was posted to
 * a **"url"** column, which is the url of  the thread
 
-Of these columns, the **"title"** column is the most pertinent since it often contains the area code the poster wants information about. In order to generate a dataset of area code mentions, we will need to extract any possible area codes mentiond in the title. One parsing procedure might be to extract any three-digit number within the title column. This will produce an array of candidate area codes.
+Of these columns, the **"title"** column is the most pertinent since it often contains the area code the poster wants information about. In order to generate a dataset of area code mentions, we will need to extract any possible area codes mentiond in the title. 
+
+The following parsing procedure uses the stringr library's str_extract function to identify and extract a three-digit string from each row in the title column. If the function fails to extract anything, it gives an 'NA' for that row. The function returns an array of candidate area code mentions. 
+
+We can validate the array of candidate area code strings against an external dataset of US area codes. If the string can be found among the US area codes, its a valid area code. We'll keep only the valid candidates for futher analysis, but we'll also print out a frequency table of the invalid area codes just to see what we excluded.
 
 ```{r}
-candidate_area_codes<-str_extract(glassine_urls$title, "[0-9]{3}")
+candidate_mentions<-str_extract(glassine_urls$title, "[0-9]{3}")
+valid_mentions<-candidate_mentions[candidate_mentions %in% area_codes_by_state$Area.code]
+table(candidate_mentions[!candidate_mentions %in% area_codes_by_state$Area.code],
+      useNA = "always", dnn = 'Invalid Candidates')
 ```
 
-From this array we can calculate a frequency table for area code mentions:
+A few three-digit strings that are not area codes occassionally show up in thread titles. In addition, nearly 40% of extractions returned 'NA', which means there was often no three-digit string to be extracted from the title. However, 60% of threads did have a candidate to extract and 98% of candidates were valid in that they did have a corresponding area code. This gives us `r 998-393-11` area code mentions with which to shade our choropleth map.
+
+After removing the invalid candidates, the valid area code mentions are ready to be turned into a frequency table which we will later use to shade our choropleth maps. This code chunk will generate the frequency table for area codes in the glassine dataset from most to least mentions. Then, to give us an idea of how evenly distributed the mentions are among the area codes, we generate a cumulative fraction plot.
 
 ```{r}
-ac_tbl<-as.data.frame(sort(table(candidate_area_codes),decreasing=TRUE))
-kable(ac_tbl,align='ccc')
+tally<-sort(table(valid_mentions, dnn = 'Area Code Tallies'),decreasing=TRUE)
+tally
+
+plot(cumsum(as.vector(tally))/sum(as.vector(tally)),ylim=c(0,1),
+     ylab = "Cumulative Fraction of Mentions",
+     xlab = "nth-most Mentioned Area Code")
+text(x = cumsum(as.vector(tally))/sum(as.vector(tally)),
+     labels = row.names(tally), 
+     cex=0.6, pos=1, col="red")
 ```
 
-Some of these candidates are not area codes; e.g. '007'. However, most candidates do have a corresponding area code. We can validate our candidates against the independent dataset from the **area_codes_by_state** data in the **Area.code** column. Here are the candidates that could not be validated with the external dataset:
+The sorted table shows that the top two most frequently-mentioned area codes are '412' and '973', and the cumulative fraction plot illustrates that nearly 80% of the mentions come from just these two area codes. When we make our map, we'll be able to see where these two area codes are located.
 
-```{r}
-valid_ac<-ac_tbl$candidate_area_codes %in% area_codes_by_state$Area.code
-kable(ac_tbl[!valid_ac,],align='ccc')
-```
+## Boundary Data
 
-After removing the invalid candidates, the frequency table is ready to be used for constructing the cholopleth maps for /r/glassine mentions. Here is what the top five most frequently mentiond area codes are in the glassine dataset:
-
-```{r}
-valid_ac<-ac_tbl$candidate_area_codes %in% area_codes_by_state$Area.code
-ac_tbl<-ac_tbl[valid_ac,]
-kable(ac_tbl[1:5,],align='ccc',booktabs=TRUE)
-```
-
-##Collect and process shapefile data
-
-Cholopleth maps shade different map regions according to a variable of interest. In this case, the shading will reflect the number of mentions a given area code has in the glassine dataset. But to shade a given map region we will have to first define its location. This involves finding data that delineates the extent of the area codes within USA.
+Choropleth maps shade different map regions according to a variable of interest. In this case, the shading will reflect the number of mentions a given area code has in the glassine dataset. But to shade a given map region we will have to first define its location. This involves finding data that delineates the extent of the area codes within USA. Finding a shapefile for US area codes took some googling, but eventually I found one [here](https://www.sciencebase.gov/catalog/item/4f4e4a19e4b07f02db605716). I've uploaded the zip file to the [github repo](https://github.com/areeves87/glassine-area-codes) to make it easy for others to use. 
 
 I use a number of R packages for working with the shapefile. rgdal::readOGR is used for reading the shapefile into R. rgeos::gCentroid is used for finding the centroid of area code territories. sp/rgdal R packages have spTransform and CRS functions for map projection and datum transformation. The broom R package is useful for transforming spatial polygon dataframes into tidy dataframes for ggplot2. 
 
@@ -127,9 +129,7 @@ library(broom)
 library(rgeos)
 ```
 
-Finding a shapefile for US area codes took some googling, but eventually I found one. I've uploaded the zip file to the [github repo](https://github.com/areeves87/glassine-area-codes) to make it easy for others to use. 
-
-The following code chunk checks whether the Areacode.zip file is available in the working directory. If it isn't, it downloads the file from the web into the working directory. Then, it unzip the AreaCode.zip file to extract the AreaCode.shp file delineating the extent of each area code in lat,lon coordinates. Finally, it reads in the .shp file and then removes all extracted files to clear up space.
+Once we've loaded the rgdal package, we can read in the shapefile after extracting it from the zipped folder. The following code chunk checks whether the Areacode.zip file is available in the working directory. If it isn't, it downloads the file from the github repo into the working directory. Then, it unzips the AreaCode.zip file to extract the AreaCode.shp file delineating the extent of each area code in lat,lon coordinates. Finally, it reads in the .shp file and then removes all extracted files to clear up space.
 
 ```{r}
 if (file.exists("AreaCode.shp")) {
@@ -152,24 +152,24 @@ if (file.exists("AreaCode.shp")) {
 
 (I'm getting ahead of myself a bit here, but I'm including one more processing step on the frequency table. This is because of a plotting issue I run into later on with the maps. The essence of the problem is that these low-count area codes completely overlap with some high-count area codes, making it difficult to see the shading for the high-count area codes. There is probably a more elegant way of handling the problem. For now, here's the hard-coded step:)
 ```{r}
-ac_tbl<-ac_tbl[!(names(ac_tbl) %in% c("267","862"))]
+tally<-tally[!(names(tally) %in% c("267","862"))]
 ```
 
 
-We only need a subset of the area codes contained in the shapefile, so let's select shapes only for area codes mentioned in the frequency table.
+This is a shapefile that includes area code boundries all over the USA, but We only need a subset of the area codes contained in the shapefile. Let's select shapes only for area codes mentioned in the frequency table.
 ```{r}
 
-glassine_area<-area[area$NPA %in% ac_tbl$candidate_area_codes,]
+glassine_area<-area[area$NPA %in% names(tally),]
 ```
 
-add a column of data indicating number of mentions per area code
+Now let's add a column of data indicating number of mentions per area code.
 ```{r}
 
-ac_ref<-match(glassine_area@data$NPA,ac_tbl$candidate_area_codes)
-glassine_area@data$TALLY <- as.vector(ac_tbl[ac_ref,2])
+ac_ref<-match(glassine_area@data$NPA,names(tally))
+glassine_area@data$TALLY <- as.vector(tally[ac_ref])
 ```
 
-Later, we are going to plot the area code for some of the glassine hotspots. For area code labels, use the centroid of an area code, which is found using a function in the rgeos package. Find lat,lon of centroids and add them as two columns of data.
+Let's also add some columns for where to plot area code lables. We'll use the centroid of an area code, which is found using a function in the rgeos package. Find lat,lon of centroids and add them as two columns of data.
 ```{r}
 
 glassine_area$CENTER.x<-tidy(gCentroid(glassine_area, byid=TRUE))[,1]
@@ -185,9 +185,9 @@ glassine_WGS84$polyID <- sapply(slot(glassine_WGS84, "polygons"), function(x) sl
 glassine_df_WGS84 <- merge(glassine_df_WGS84, glassine_WGS84, by.x = "id", by.y="polyID")
 ```
 
-## Cholopleth Maps of /r/glassine Dataset
+Okay now we have a dataset of an area code's boundary and the number of times it was mentioned in the /r/glassine dataset. We are ready to make our choropleth maps!
 
-Now we have shapes for the area codes we are interested in and a count for each area code mentioned on /r/glassine. We are ready to make our cholopleth maps!
+## Choropleth Maps
 
 For this step I use RColorBrewer to make the color gradient for the shadings, ggmap for retrieving google map images, and ggplot2 for making the shaded overlays.
 
@@ -198,7 +198,7 @@ library(ggplot2)
 library(ggmap)
 ```
 
-Create a cholopleth map of mainland USA
+We'll start by creating a choropleth map of mainland USA to get an overview of how the area codes are distributed. I' ve stored a .png of the map from the last time I ran the code, so this next chunk start by trying to load the .png. If it fails, it repeats the original map-making procedure, which is to use ggmap to grab a satellite image of the united states and geom_polygon to overlay the area codes. The polygons get filled according to the value of their TALLY, with light blue for the lowest tally and red for the highest tally.
 ```{r, out.width='100%'}
 if (file.exists("usa_glassine.png")) {
   knitr::include_graphics('usa_glassine.png')
@@ -215,7 +215,10 @@ ggmap(usa_basemap) +
 
 ```
 
-Create a cholopleth map of PA-NJ region
+It is clear from this map that the area codes mostly lay in the northeastern US. Let's zoom in on Pennsylvania to get a clearer idea of where the area codes are. 
+
+We'll repeat the same procedure. If it comes to generating the map again we'll set the location to "PA" and the zoom to 6, then fill in the shading for the area code. This time, we'll even label the area codes that have more than 20 mentions.
+
 ```{r, out.width='100%'}
 if (file.exists("pa_glassine.png")) {
   knitr::include_graphics('pa_glassine.png')
@@ -235,10 +238,10 @@ ggmap(pa_basemap) +
 
 ```
 
-## Conclusion and Future Directions
+## Discussion
 
 Out of roughly the 1000 most-recent threads on /r/glassine, just four area codes made up the majority of mentions. 412, which covers Pittsburgh, is one of the hotspots. 973, which covers Newark, is another hotspot. Because only a few area codes get mention in the subreddit, the idea that the subreddit is representative of US opiate users is highly questionable. Instead, it appears we are looking at a population biased towards Pittsburgh and Newark.
 
 Although this subreddit probably won't tell us much about opiate users across the US, it may be informative for the hotspots I've identified. Future research might compare this dataset against a publicly-available map of overdoses or heroin-related drug busts in order to validate the findings. It may also be informative to examine how many redditors post to the /r/glassine subreddit -- we may be looking at posts from just a few individuals, which would further bias the results. 
 
-Feedback, requests, etc. are welcome and should be directed at redditor /u/13ass13ass or by filing an issue at the [github repo](https://github.com/areeves87/glassine-area-codes).
+Feedback, requests, etc. are welcome and should be directed at the [github repo](https://github.com/areeves87/glassine-area-codes).

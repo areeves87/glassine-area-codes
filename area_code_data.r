@@ -3,10 +3,10 @@ library(RedditExtractoR)
 library(stringr)
 
 if (file.exists("glassine_urls.csv")) {
-        glassine_urls <- read.csv("glassine_urls.csv")
+        glassine_urls <- read.csv("glassine_urls.csv",stringsAsFactors = FALSE)
 } else {
         download.file("https://github.com/areeves87/glassine-area-codes/blob/master/glassine_urls.csv","glassine_urls.csv",mode="wb")
-        glassine_urls <- read.csv("glassine_urls.csv")
+        glassine_urls <- read.csv("glassine_urls.csv",stringsAsFactors = FALSE)
 }
 
 # ##Uncomment to re-perform reddit scrape
@@ -14,10 +14,10 @@ if (file.exists("glassine_urls.csv")) {
 
 
 if (file.exists("area_codes_by_state.csv")) {
-        area_codes_by_state <- read.csv("area_codes_by_state.csv")
+        area_codes_by_state <- read.csv("area_codes_by_state.csv",stringsAsFactors = FALSE)
 } else {
         download.file("https://github.com/areeves87/glassine-area-codes/blob/master/area_codes_by_state.csv","area_codes_by_state.csv",mode="wb")
-        area_codes_by_state <- read.csv("area_codes_by_state.csv")
+        area_codes_by_state <- read.csv("area_codes_by_state.csv",stringsAsFactors = FALSE)
 }
 
 #grab three-digit strings from thread titles; these are candidate area codes
