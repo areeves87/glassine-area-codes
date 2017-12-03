@@ -5,8 +5,13 @@ library(stringr)
 if (file.exists("glassine_urls.csv")) {
         glassine_urls <- read.csv("glassine_urls.csv")
 } else {
-        glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+        download.file("https://github.com/areeves87/glassine-area-codes/blob/master/glassine_urls.csv","glassine_urls.csv",mode="wb")
+        glassine_urls <- read.csv("glassine_urls.csv")
 }
+
+# ##Uncomment to re-perform reddit scrape
+# glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+
 
 if (file.exists("area_codes_by_state.csv")) {
         area_codes_by_state <- read.csv("area_codes_by_state.csv")

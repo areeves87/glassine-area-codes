@@ -9,7 +9,6 @@ output:
     #code_folding: hide
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -52,19 +51,25 @@ Check whether the raw data is available in the working directory. If it isn't co
 ```{r}
 
 if (file.exists("glassine_urls.csv")) {
-  glassine_urls <- read.csv("glassine_urls.csv")
+        glassine_urls <- read.csv("glassine_urls.csv")
 } else {
-  glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+        download.file("https://github.com/areeves87/glassine-area-codes/blob/master/glassine_urls.csv","glassine_urls.csv",mode="wb")
+        glassine_urls <- read.csv("glassine_urls.csv")
 }
 
+# ##Uncomment to re-perform reddit scrape
+# glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+
+
 if (file.exists("area_codes_by_state.csv")) {
-  area_codes_by_state <- read.csv("area_codes_by_state.csv")
+        area_codes_by_state <- read.csv("area_codes_by_state.csv")
 } else {
-  sprintf("use URL to get xls file -- file.download() didn't work for me")
+        download.file("https://github.com/areeves87/glassine-area-codes/blob/master/area_codes_by_state.csv","area_codes_by_state.csv",mode="wb")
+        area_codes_by_state <- read.csv("area_codes_by_state.csv")
 }
 
 ```
-[Click here for the area codes by state table if the data loading failed](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi2lb79huDXAhWq0FQKHeQ0A9EQFggoMAA&url=http%3A%2F%2Fmedia.juiceanalytics.com%2Fdownloads%2Farea_codes_by_state.xls&usg=AOvVaw3xPwQBSxfXDIqjnq6etEWn)
+
 
 Examine the glassine data to decide how to parse the content.
 ```{r}
@@ -127,17 +132,22 @@ Finding a shapefile for US area codes took some googling, but eventually I found
 The following code chunk checks whether the Areacode.zip file is available in the working directory. If it isn't, it downloads the file from the web into the working directory. Then, it unzip the AreaCode.zip file to extract the AreaCode.shp file delineating the extent of each area code in lat,lon coordinates. Finally, it reads in the .shp file and then removes all extracted files to clear up space.
 
 ```{r}
-if (file.exists("AreaCode.zip")) {
-  unzip("AreaCode.zip")
-  area <- readOGR("AreaCode.shp")
+if (file.exists("AreaCode.shp")) {
+        area <- readOGR("AreaCode.shp")
+} else if (file.exists("AreaCode.zip")) {
+        unzip("AreaCode.zip")
+        area <- readOGR("AreaCode.shp")
+        
+        file.remove("AreaCode.dbf","AreaCode.prj","AreaCode.sbn",
+                    "AreaCode.sbx","AreaCode.shx","AreaCode.shp","AreaCode.shp.xml")
 } else {
-  download.file("https://www.sciencebase.gov/catalog/file/get/4f4e4a19e4b07f02db605716?facet=AreaCode","AreaCode.zip",mode="wb")
-  unzip("AreaCode.zip")
-  area <- readOGR("AreaCode.shp")
+        download.file("https://github.com/areeves87/glassine-area-codes/blob/master/AreaCode.zip","AreaCode.zip",mode="wb")
+        unzip("AreaCode.zip")
+        area <- readOGR("AreaCode.shp")
+        
+        file.remove("AreaCode.dbf","AreaCode.prj","AreaCode.sbn",
+                    "AreaCode.sbx","AreaCode.shx","AreaCode.shp","AreaCode.shp.xml")
 }
-
-file.remove("AreaCode.dbf","AreaCode.prj","AreaCode.sbn",
-            "AreaCode.sbx","AreaCode.shx","AreaCode.shp","AreaCode.shp.xml")
 ```
 
 (I'm getting ahead of myself a bit here, but I'm including one more processing step on the frequency table. This is because of a plotting issue I run into later on with the maps. The essence of the problem is that these low-count area codes completely overlap with some high-count area codes, making it difficult to see the shading for the high-count area codes. There is probably a more elegant way of handling the problem. For now, here's the hard-coded step:)
