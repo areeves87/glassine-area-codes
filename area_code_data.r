@@ -2,15 +2,18 @@
 library(RedditExtractoR)
 library(stringr)
 
-# #uncomment to scrape /r/glassine
-# glassine_urls<-reddit_urls(subreddit = "glassine",page_threshold = 40)
+if (file.exists("glassine_urls.csv")) {
+        glassine_urls <- read.csv("glassine_urls.csv")
+} else {
+        glassine_urls <- reddit_urls(subreddit = "glassine",page_threshold = 40)
+}
 
-#use URL to get xls file -- file.download() didn't work for me
-#"https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi2lb79huDXAhWq0FQKHeQ0A9EQFggoMAA&url=http%3A%2F%2Fmedia.juiceanalytics.com%2Fdownloads%2Farea_codes_by_state.xls&usg=AOvVaw3xPwQBSxfXDIqjnq6etEWn"
-
-#load area code table and /r/glassine dataset
-area_codes_by_state <- read.csv("area_codes_by_state.csv")
-glassine_urls <- read.csv("glassine_urls.csv")
+if (file.exists("area_codes_by_state.csv")) {
+        area_codes_by_state <- read.csv("area_codes_by_state.csv")
+} else {
+        download.file("https://github.com/areeves87/glassine-area-codes/blob/master/area_codes_by_state.csv","area_codes_by_state.csv",mode="wb")
+        area_codes_by_state <- read.csv("area_codes_by_state.csv")
+}
 
 #grab three-digit strings from thread titles; these are candidate area codes
 area_codes<-str_extract(glassine_urls$title, "[0-9]{3}")

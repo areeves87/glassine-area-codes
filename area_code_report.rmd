@@ -225,3 +225,10 @@ ggmap(pa_basemap) +
 
 ```
 
+## Conclusion and Future Directions
+
+Out of roughly the 1000 most-recent threads on /r/glassine, just four area codes made up the majority of mentions. 412, which covers Pittsburgh, is one of the hotspots. 973, which covers Newark, is another hotspot. Because only a few area codes get mention in the subreddit, the idea that the subreddit is representative of US opiate users is highly questionable. Instead, it appears we are looking at a population biased towards Pittsburgh and Newark.
+
+Although this subreddit probably won't tell us much about opiate users across the US, it may be informative for the hotspots I've identified. Future research might compare this dataset against a publicly-available map of overdoses or heroin-related drug busts in order to validate the findings. It may also be informative to examine how many redditors post to the /r/glassine subreddit -- we may be looking at posts from just a few individuals, which would further bias the results. 
+
+Feedback, requests, etc. are welcome and should be directed at redditor /u/13ass13ass or by filing an issue at the [github repo](https://github.com/areeves87/glassine-area-codes).
